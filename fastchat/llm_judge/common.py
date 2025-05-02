@@ -403,12 +403,21 @@ def play_a_match_pair(match: MatchPair, output_file: str):
 
     return result
 
-
 def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
+    """
+    OpenAI ChatCompletion を呼び出して回答を返すヘルパー。
+    * reasoning_content フィールドが存在しない／None の場合でも安全に処理する。
+    """
+    # --- API エンドポイント設定 ------------------------
     if api_dict is not None:
         openai.api_base = api_dict["api_base"]
         openai.api_key = api_dict["api_key"]
+
+    # --- 変数初期化 ------------------------------------
     output = API_ERROR_OUTPUT
+    reasoning_content = ""
+
+    # --- リトライ付き API コール ------------------------
     for _ in range(API_MAX_RETRY):
         try:
             messages = conv.to_openai_api_messages()
@@ -416,16 +425,38 @@ def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
                 model=model,
                 messages=messages,
                 n=1,
-                temperature=temperature,
-                max_tokens=max_tokens,
+                temperature=0.0,
+                max_tokens=16384,
             )
+
+            # メイン回答
             output = response["choices"][0]["message"]["content"]
-            break
+
+            # reasoning_content はモデルにより無い場合がある
+            msg_obj = response["choices"][0]["message"]
+            if isinstance(msg_obj, dict):
+                reasoning_content = msg_obj.get("reasoning_content", "") or ""
+            else:
+                reasoning_content = getattr(msg_obj, "reasoning_content", "") or ""
+
+            break  # 成功したらループ離脱
         except openai.error.OpenAIError as e:
             print(type(e), e)
             time.sleep(API_RETRY_SLEEP)
 
-    return output
+    # --- 出力整形 --------------------------------------
+    if reasoning_content:
+        res = f"<think>{reasoning_content}</think>{output}"
+        print(res)
+    else:
+        res = output
+
+    # デバッグ用ログ
+    print("temperature", temperature)
+    print("max_tokens", max_tokens)
+
+    return res
+
 
 
 def chat_completion_openai_azure(model, conv, temperature, max_tokens, api_dict=None):
@@ -468,6 +499,7 @@ def chat_completion_openai_azure(model, conv, temperature, max_tokens, api_dict=
 
 
 def chat_completion_anthropic(model, conv, temperature, max_tokens, api_dict=None):
+    print("来てるよー")
     if api_dict is not None and "api_key" in api_dict:
         api_key = api_dict["api_key"]
     else:

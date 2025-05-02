@@ -86,6 +86,7 @@ OPENAI_MODEL_LIST = (
     "im-a-good-gpt2-chatbot",
     "gpt-4o-mini-2024-07-18",
     "gpt-4o-2024-05-13",
+    "gpt-4o",
     "gpt-4o-2024-08-06",
     "chatgpt-4o-latest-20240903",
     "chatgpt-4o-latest",
