@@ -4,6 +4,7 @@ Usage:
 python3 gen_api_answer.py --model gpt-3.5-turbo
 """
 import argparse
+import datetime
 import json
 import os
 import time
@@ -125,7 +126,9 @@ if __name__ == "__main__":
     if args.answer_file:
         answer_file = args.answer_file
     else:
-        answer_file = f"data/{args.bench_name}/model_answer/{args.model}.jsonl"
+        model_name = args.model.split("/")[-1]
+        current_time = datetime.datetime.now().strftime("%H%M")
+        answer_file = f"data/{args.bench_name}/model_answer/{model_name}_{args.force_temperature}_{current_time}.jsonl"
     print(f"Output to {answer_file}")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as executor:

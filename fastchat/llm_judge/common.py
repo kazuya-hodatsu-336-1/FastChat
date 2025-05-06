@@ -417,18 +417,41 @@ def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
     output = API_ERROR_OUTPUT
     reasoning_content = ""
 
+    print("TEST")
     # --- リトライ付き API コール ------------------------
     for _ in range(API_MAX_RETRY):
         try:
             messages = conv.to_openai_api_messages()
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=messages,
-                n=1,
-                temperature=0.0,
-                max_tokens=16384,
-            )
-
+            if model == "gpt-4o":
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=messages,
+                    # n=1,
+                    #Models
+                    # no_repeat_ngram_size=6,
+                    # repetition_penalty=1.2,
+                    # temperature=0.2,
+                    # max_tokens=4096,
+                    
+                    #OpenAI:
+                    temperature=0.0,
+                    max_tokens=16384,
+                )
+            else:
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=messages,
+                    # n=1,
+                    #Models
+                    no_repeat_ngram_size=6,
+                    repetition_penalty=1.1,
+                    temperature=temperature,
+                    max_tokens=16384,
+                    
+                    #OpenAI:
+                    # temperature=0.0,
+                    # max_tokens=16384,
+                )
             # メイン回答
             output = response["choices"][0]["message"]["content"]
 
